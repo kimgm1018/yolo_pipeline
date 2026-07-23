@@ -120,7 +120,7 @@ build_engine () {
       --onnx="$onnx" \
       --saveEngine="$engine" \
       --fp16 \
-      --buildOnly \
+      --skipInference \
       --memPoolSize=workspace:${try_ws}M \
       --builderOptimizationLevel="$try_opt" \
       "${extra[@]}" \

@@ -49,7 +49,7 @@ Orin Nano에서 YOLO 빌드가 workspace 부족으로 실패하면:
 /usr/src/tensorrt/bin/trtexec \
   --onnx=models/best.onnx \
   --saveEngine=models/yolo26_fp16.engine \
-  --fp16 --buildOnly \
+  --fp16 --skipInference \
   --memPoolSize=workspace:4096M \
   --builderOptimizationLevel=3
 ```
