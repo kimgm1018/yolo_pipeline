@@ -27,14 +27,24 @@ cd jetson_pipeline
 
 ## TensorRT FP16 (Jetson)
 
-생성된 ONNX를 보드로 옮긴 뒤:
+생성된 ONNX를 보드 `models/`로 옮긴 뒤:
 
 ```bash
-cd jetson_pipeline
+cd yolo_pipeline   # 또는 jetson_pipeline
 bash scripts/jetson_trt.sh
+# YOLO만 / OCR만
+bash scripts/jetson_trt.sh --yolo-only
+bash scripts/jetson_trt.sh --ocr-only
 ```
 
-또는 루트 `models/`에 엔진을 두고 `JETSON_SETUP.md`의 `trtexec` 명령을 그대로 써도 된다.
+Orin Nano에서 YOLO 빌드가 workspace 부족으로 실패하면:
+
+```bash
+# 다른 GPU 프로세스 종료 후
+TRT_WORKSPACE=12288 TRT_BUILDER_OPT=0 bash scripts/jetson_trt.sh --yolo-only
+```
+
+스크립트 기본값: workspace **8192MiB**, `builderOptimizationLevel=1`, 실패 시 workspace↑/opt↓ 자동 재시도.
 
 ## MQTT
 
