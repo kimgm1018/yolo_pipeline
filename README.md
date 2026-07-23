@@ -39,12 +39,26 @@ bash scripts/jetson_trt.sh --ocr-only
 
 Orin Nano에서 YOLO 빌드가 workspace 부족으로 실패하면:
 
+1. **접미사**: `trtexec`는 `MiB`가 아니라 **`M`/`G`** 만 인식한다.  
+   (`8192MiB` → workspace가 사실상 0에 가까워질 수 있음)
+2. GUI/브라우저 끄고 **swap 8~16G** 확보
+3. 스크립트 재실행 (기본이 `…M` + 자동 재시도)
+
 ```bash
-# 다른 GPU 프로세스 종료 후
-TRT_WORKSPACE=12288 TRT_BUILDER_OPT=0 bash scripts/jetson_trt.sh --yolo-only
+# 수동 예 (접미사 M 주의)
+/usr/src/tensorrt/bin/trtexec \
+  --onnx=models/best.onnx \
+  --saveEngine=models/yolo26_fp16.engine \
+  --fp16 --buildOnly \
+  --memPoolSize=workspace:4096M \
+  --builderOptimizationLevel=3
 ```
 
-스크립트 기본값: workspace **8192MiB**, `builderOptimizationLevel=1`, 실패 시 workspace↑/opt↓ 자동 재시도.
+```bash
+TRT_WORKSPACE=2048 TRT_BUILDER_OPT=0 bash scripts/jetson_trt.sh --yolo-only
+```
+
+스크립트 기본: 가용 RAM 기반 workspace(`M`), `builderOptimizationLevel=3`, 실패 시 여러 (ws,opt) 조합 재시도. **16G workspace로 올리지 않음** (8GB 보드에 무의미).
 
 ## MQTT
 
