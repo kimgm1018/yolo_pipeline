@@ -1,0 +1,11 @@
+# More stable ByteTrack for flickering detections
+# Pass low-score boxes to tracker: use model --conf <= track_low_thresh / near it
+# (Ultralytics filters by conf before tracking)
+
+tracker_type: bytetrack
+track_high_thresh: 0.20
+track_low_thresh: 0.05
+new_track_thresh: 0.15
+track_buffer: 30
+match_thresh: 0.7
+fuse_score: True

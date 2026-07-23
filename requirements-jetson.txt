@@ -1,0 +1,10 @@
+# Jetson Orin Nano — 이 폴더에서만 pip
+#   cd ~/yolo-pipeline/yolo_pipeline
+#   python3 -m venv --system-site-packages venv
+#   source venv/bin/activate
+#   pip install -r requirements-jetson.txt
+
+PyYAML>=5.4
+requests>=2.25.0
+# MQTT는 선택 (현재 main은 파일 로그)
+# paho-mqtt>=1.6.1

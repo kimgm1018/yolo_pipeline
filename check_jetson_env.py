@@ -1,8 +1,7 @@
-"""Jetson 환경 / 모델 파일 검사."""
+"""Jetson 환경 검사 — ~/yolo-pipeline/yolo_pipeline 에서 실행."""
 
 from __future__ import annotations
 
-import os
 import platform
 import sys
 from pathlib import Path
@@ -24,20 +23,10 @@ def warn(msg):
 
 def main():
     failures = 0
-
     print("=== check_jetson_env ===")
-    py = sys.version.split()[0]
-    print(f"Python: {py}")
-    if not py.startswith("3.10"):
-        warn(f"권장 Python 3.10.x (현재 {py})")
-    else:
-        ok(f"Python {py}")
-
-    machine = platform.machine().lower()
-    if machine in ("aarch64", "arm64"):
-        ok(f"arch={machine}")
-    else:
-        warn(f"arch={machine} (Jetson은 aarch64)")
+    print(f"ROOT: {ROOT}")
+    print(f"Python: {sys.version.split()[0]}")
+    ok(f"arch={platform.machine()}")
 
     try:
         import numpy as np
@@ -51,59 +40,61 @@ def main():
         import cv2
 
         ok(f"opencv {cv2.__version__}")
-        build = cv2.getBuildInformation()
-        if "GStreamer" in build and "YES" in build.split("GStreamer")[1][:40]:
-            ok("OpenCV GStreamer: YES")
-        else:
-            warn("OpenCV GStreamer 확인 필요")
     except Exception as e:
         fail(f"opencv: {e}")
         failures += 1
 
     try:
-        import tensorrt as trt
+        import yaml  # noqa: F401
 
-        ok(f"tensorrt {trt.__version__}")
+        ok("PyYAML")
     except Exception as e:
-        fail(f"tensorrt: {e}")
+        fail(f"PyYAML: {e}")
         failures += 1
 
-    try:
-        import pycuda.driver as cuda  # noqa: F401
-
-        ok("pycuda available")
-    except Exception:
+    arch = platform.machine().lower()
+    if arch in ("aarch64", "arm64"):
         try:
-            from cuda import cudart  # noqa: F401
+            import tensorrt as trt
 
-            ok("cuda-python available")
+            ok(f"tensorrt {trt.__version__}")
         except Exception as e:
-            fail(f"CUDA python binding (pycuda/cuda-python): {e}")
+            fail(f"tensorrt: {e}")
             failures += 1
+        try:
+            import pycuda.driver  # noqa: F401
+
+            ok("pycuda")
+        except Exception:
+            try:
+                from cuda import cudart  # noqa: F401
+
+                ok("cuda-python")
+            except Exception as e:
+                fail(f"CUDA binding: {e}")
+                failures += 1
+    else:
+        warn("PC host - tensorrt check skipped")
 
     for rel in (
+        "main.py",
+        "config.py",
         "models/yolo26_fp16.engine",
         "models/plate_rec_fp16.engine",
         "models/plate_dict.txt",
+        "trackers/bytetrack_stable.yaml",
     ):
         p = ROOT / rel
         if p.exists():
-            ok(f"exists {rel} ({p.stat().st_size} bytes)")
+            extra = f" ({p.stat().st_size} bytes)" if p.is_file() else ""
+            ok(f"{rel}{extra}")
         else:
             fail(f"missing {rel}")
             failures += 1
 
-    # memory
-    meminfo = Path("/proc/meminfo")
-    if meminfo.exists():
-        data = meminfo.read_text()
-        for key in ("MemTotal", "MemAvailable", "SwapTotal"):
-            for line in data.splitlines():
-                if line.startswith(key):
-                    ok(line.strip())
-                    break
-    else:
-        warn("/proc/meminfo 없음 (Windows?)")
+    import config as cfg
+
+    ok(f"IMGSZ={cfg.IMGSZ} BACKEND={cfg.BACKEND}")
 
     videos = sorted(Path("/dev").glob("video*")) if Path("/dev").exists() else []
     if videos:
@@ -113,9 +104,11 @@ def main():
 
     print("=== summary ===")
     if failures:
-        fail(f"{failures} check(s) failed")
+        fail(f"{failures} failed")
         sys.exit(1)
-    ok("all critical checks passed")
+    ok("ready")
+    print("  python main.py --source 0 --no-ocr")
+    print("  python main.py --source 0")
     sys.exit(0)
 
 
