@@ -23,7 +23,7 @@ cd jetson_pipeline
 ..\venv\Scripts\python.exe export_onnx.py --yolo
 ```
 
-출력: `models/best.onnx` (`1x3x640x640`)
+출력: `models/best.onnx` (`1x3x416x416`, 학습 imgsz와 동일)
 
 ## TensorRT FP16 (Jetson)
 

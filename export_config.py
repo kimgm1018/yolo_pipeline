@@ -5,12 +5,12 @@ from pathlib import Path
 JETSON_DIR = Path(__file__).resolve().parent
 PIPELINE_ROOT = JETSON_DIR.parent
 
-# YOLO
-YOLO_IMGSZ = 640
+# YOLO — 학습 imgsz=416
+YOLO_IMGSZ = 416
 YOLO_INPUT_SHAPE = (1, 3, YOLO_IMGSZ, YOLO_IMGSZ)  # NCHW
 YOLO_PT = PIPELINE_ROOT / "models" / "best.pt"
 YOLO_ONNX = JETSON_DIR / "models" / "best.onnx"
-YOLO_ENGINE = JETSON_DIR / "models" / "best_fp16.engine"
+YOLO_ENGINE = JETSON_DIR / "models" / "yolo26_fp16.engine"
 
 # OCR — ocr_finetune_rec/inference.yml RecResizeImg
 OCR_H = 48

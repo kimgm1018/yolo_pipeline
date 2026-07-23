@@ -24,10 +24,20 @@ TRTEXEC="${TRTEXEC:-/usr/src/tensorrt/bin/trtexec}"
 
 DO_YOLO=1
 DO_OCR=1
+YOLO_ONNX_FILE=""
+YOLO_ENGINE_FILE=""
 for arg in "$@"; do
   case "$arg" in
     --yolo-only) DO_OCR=0 ;;
     --ocr-only)  DO_YOLO=0 ;;
+    --imgsz320)
+      echo "ERROR: 이 프로젝트 학습 imgsz는 416입니다. --imgsz416 을 쓰세요."
+      exit 1
+      ;;
+    --imgsz416)
+      YOLO_ONNX_FILE="best_416.onnx"
+      YOLO_ENGINE_FILE="yolo26_fp16.engine"
+      ;;
     -h|--help)
       sed -n '2,20p' "$0"
       exit 0
@@ -135,19 +145,20 @@ build_engine () {
   echo "  1) free -h / swapon — MemAvailable이 작으면 swap 추가 (8~16G)"
   echo "  2) GUI 종료: sudo systemctl isolate multi-user.target"
   echo "  3) 로그에 'Maximum workspace size' 가 MB~GB 단위인지 (수 KB면 접미사 오류)"
-  echo "  4) 그래도 실패 시 PC에서 imgsz=320 ONNX를 다시 export 후 재시도"
+  echo "  4) 그래도 실패 시 swap/GUI 재확인 (학습 imgsz=416, 320 사용 금지)"
   echo "     TRT_WORKSPACE=2048 TRT_BUILDER_OPT=0 bash scripts/jetson_trt.sh --yolo-only"
   return 1
 }
 
 if [[ "$DO_YOLO" -eq 1 ]]; then
-  if [[ -f "$MODELS/best.onnx" ]]; then
-    echo "=== YOLO FP16 ==="
-    build_engine \
-      "$MODELS/best.onnx" \
-      "$MODELS/yolo26_fp16.engine"
+  yolo_onnx="$MODELS/${YOLO_ONNX_FILE:-best.onnx}"
+  yolo_engine="$MODELS/${YOLO_ENGINE_FILE:-yolo26_fp16.engine}"
+  if [[ -f "$yolo_onnx" ]]; then
+    echo "=== YOLO FP16 ($yolo_onnx) ==="
+    echo "NOTE: 추론 input_size/IMGSZ=416 과 엔진을 맞출 것"
+    build_engine "$yolo_onnx" "$yolo_engine"
   else
-    echo "SKIP (missing): $MODELS/best.onnx"
+    echo "SKIP (missing): $yolo_onnx"
   fi
 fi
 

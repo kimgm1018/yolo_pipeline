@@ -20,28 +20,31 @@ from export_config import (  # noqa: E402
 )
 
 
-def export_yolo() -> Path:
+def export_yolo(imgsz: int | None = None) -> Path:
     if not YOLO_PT.exists():
         raise FileNotFoundError(f"YOLO 가중치 없음: {YOLO_PT}")
 
     from ultralytics import YOLO
+
+    size = int(imgsz or YOLO_IMGSZ)
+    dest = YOLO_ONNX if size == YOLO_IMGSZ else (JETSON_DIR / "models" / f"best_{size}.onnx")
 
     YOLO_ONNX.parent.mkdir(parents=True, exist_ok=True)
     model = YOLO(str(YOLO_PT))
     # ultralytics는 보통 가중치 옆에 onnx를 씀 → jetson_pipeline/models 로 이동
     out = model.export(
         format="onnx",
-        imgsz=YOLO_IMGSZ,
+        imgsz=size,
         simplify=True,
         dynamic=False,
         opset=ONNX_OPSET,
     )
     src = Path(out)
-    if src.resolve() != YOLO_ONNX.resolve():
-        shutil.copy2(src, YOLO_ONNX)
-    print(f"YOLO ONNX → {YOLO_ONNX}")
-    print(f"shape: 1x3x{YOLO_IMGSZ}x{YOLO_IMGSZ}, opset={ONNX_OPSET}, dynamic=False")
-    return YOLO_ONNX
+    if src.resolve() != dest.resolve():
+        shutil.copy2(src, dest)
+    print(f"YOLO ONNX → {dest}")
+    print(f"shape: 1x3x{size}x{size}, opset={ONNX_OPSET}, dynamic=False")
+    return dest
 
 
 def export_ocr_help() -> None:
@@ -87,6 +90,7 @@ Paddle 3 PIR(`inference.json`)이면 도구 버전에 따라 실패할 수 있�
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--yolo", action="store_true")
+    p.add_argument("--imgsz", type=int, default=None, help="YOLO export size (default 640; try 320 on Orin Nano)")
     p.add_argument("--ocr", action="store_true", help="OCR ONNX 가이드 작성")
     p.add_argument("--all", action="store_true")
     args = p.parse_args()
@@ -95,7 +99,7 @@ def main():
         args.all = True
 
     if args.yolo or args.all:
-        export_yolo()
+        export_yolo(imgsz=args.imgsz)
     if args.ocr or args.all:
         export_ocr_help()
 
