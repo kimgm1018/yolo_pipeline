@@ -28,8 +28,11 @@ def track_frame(model, frame, conf, tracker):
     )[0]
 
 
-def get_detections(result):
-    """Ultralytics Results → 공통 dict 목록."""
+def get_detections(result, class_names: list[str] | None = None):
+    """Ultralytics Results → 공통 dict 목록.
+
+    class_names가 있으면 result.names 대신 이 목록으로 매핑한다 (TRT engine 대비).
+    """
     detections = []
 
     if result.boxes is None:
@@ -44,7 +47,12 @@ def get_detections(result):
             track_id = int(box.id.item())
 
         bbox = box.xyxy[0].cpu().numpy().astype(int).tolist()
-        class_name = names.get(class_id, str(class_id)) if isinstance(names, dict) else names[class_id]
+        if class_names is not None and 0 <= class_id < len(class_names):
+            class_name = class_names[class_id]
+        elif isinstance(names, dict):
+            class_name = names.get(class_id, names.get(str(class_id), str(class_id)))
+        else:
+            class_name = names[class_id]
 
         detections.append(
             {
@@ -112,7 +120,7 @@ class UltralyticsTrackedDetector:
             verbose=False,
         )[0]
         self.last_timing = {"infer_ms": (time.perf_counter() - t0) * 1000.0}
-        return get_detections(result)
+        return get_detections(result, class_names=self.class_names)
 
     def close(self):
         self.model = None
