@@ -1,4 +1,4 @@
-"""YOLO TRT + ByteTrack + OCR TRT 통합 (단일 이미지)."""
+"""YOLO TRT engine + Ultralytics BoT-SORT + OCR TRT 통합 (단일 이미지)."""
 
 from __future__ import annotations
 
@@ -10,8 +10,9 @@ import cv2
 import numpy as np
 
 import config
-from detector import TensorRTTrackedDetector
+from detector import UltralyticsTrackedDetector
 from plate_trt import PlateTensorRTRecognizer
+from yolo_trt import DEFAULT_CLASS_NAMES
 
 
 def imread(path: str):
@@ -39,11 +40,13 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     t0 = time.perf_counter()
-    detector = TensorRTTrackedDetector(
+    detector = UltralyticsTrackedDetector(
         engine_path=args.yolo_engine,
         tracker_config=config.TRACKER,
         input_size=config.IMGSZ,
         confidence_threshold=config.CONF,
+        iou_threshold=config.IOU,
+        class_names=list(DEFAULT_CLASS_NAMES),
     )
     ocr = PlateTensorRTRecognizer(args.ocr_engine, args.ocr_dict)
     try:

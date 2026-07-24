@@ -26,6 +26,7 @@ python main.py --source 0 --no-show
 | `models/plate_dict.txt` | CTC dict |
 | `main.py` | 이벤트 루프 |
 | `view_camera_web.py` | 브라우저 MJPEG 미리보기 |
-| `config.py` | 경로·IMGSZ=416 |
+| `config.py` | 경로·IMGSZ=416·BoT-SORT |
+| `trackers/botsort.yaml` | Ultralytics BoT-SORT |
 
 엔진 재빌드: `bash scripts/jetson_trt.sh --yolo-only` / `--ocr-only`

@@ -26,7 +26,7 @@ from pathlib import Path
 import cv2
 
 import config
-from detector import TensorRTTrackedDetector
+from detector import UltralyticsTrackedDetector
 from event_manager import EventManager
 from plate_collector import PlateCollector
 from yolo_trt import DEFAULT_CLASS_NAMES
@@ -118,7 +118,7 @@ def worker(args):
         if not engine.exists():
             raise FileNotFoundError(f"engine 없음: {engine}")
 
-        detector = TensorRTTrackedDetector(
+        detector = UltralyticsTrackedDetector(
             engine_path=engine,
             tracker_config=config.TRACKER,
             input_size=args.imgsz,

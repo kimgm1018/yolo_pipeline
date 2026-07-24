@@ -1,4 +1,8 @@
-"""YOLO 탐지·트래킹 계층 — ultralytics 또는 TensorRT+ByteTrack."""
+"""YOLO 탐지·트래킹 계층.
+
+- UltralyticsTrackedDetector: TensorRT .engine + Ultralytics BoT-SORT (기본)
+- TensorRTTrackedDetector: yolo_trt + 자체 ByteTrackAdapter (유지)
+"""
 
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ def load_model(model_path):
 
 
 def track_frame(model, frame, conf, tracker):
-    """Ultralytics: 한 프레임 탐지 + ByteTrack. Results 1개 반환."""
+    """Ultralytics: 한 프레임 탐지 + 트래커. Results 1개 반환."""
     return model.track(
         frame,
         persist=True,
@@ -31,6 +35,7 @@ def get_detections(result):
     if result.boxes is None:
         return detections
 
+    names = result.names or {}
     for box in result.boxes:
         class_id = int(box.cls.item())
 
@@ -39,18 +44,73 @@ def get_detections(result):
             track_id = int(box.id.item())
 
         bbox = box.xyxy[0].cpu().numpy().astype(int).tolist()
+        class_name = names.get(class_id, str(class_id)) if isinstance(names, dict) else names[class_id]
 
         detections.append(
             {
                 "track_id": track_id,
                 "class_id": class_id,
-                "class_name": result.names[class_id],
+                "class_name": class_name,
                 "confidence": float(box.conf.item()),
                 "bbox": bbox,
+                "xyxy": bbox,
             }
         )
 
     return detections
+
+
+def _apply_class_names(model, class_names: list[str]) -> None:
+    """엔진에 이름이 없거나 기본값일 때 학습 클래스 순서로 덮어쓴다."""
+    mapping = {i: name for i, name in enumerate(class_names)}
+    try:
+        model.model.names = mapping
+    except Exception:
+        pass
+    try:
+        model.names = mapping
+    except Exception:
+        pass
+
+
+class UltralyticsTrackedDetector:
+    """TensorRT .engine을 Ultralytics로 로드 + BoT-SORT(또는 yaml) track."""
+
+    def __init__(
+        self,
+        engine_path: str | Path,
+        tracker_config: str | Path,
+        input_size: int = 416,
+        confidence_threshold: float = 0.25,
+        iou_threshold: float = 0.7,
+        class_names: list[str] | None = None,
+    ):
+        from ultralytics import YOLO
+
+        self.engine_path = Path(engine_path)
+        self.tracker_config = str(tracker_config)
+        self.input_size = int(input_size)
+        self.confidence_threshold = float(confidence_threshold)
+        self.iou_threshold = float(iou_threshold)
+        self.class_names = list(class_names or DEFAULT_CLASS_NAMES)
+
+        self.model = YOLO(str(self.engine_path), task="detect")
+        _apply_class_names(self.model, self.class_names)
+
+    def track_frame(self, frame, conf=None, tracker=None):
+        result = self.model.track(
+            source=frame,
+            persist=True,
+            conf=self.confidence_threshold if conf is None else conf,
+            iou=self.iou_threshold,
+            imgsz=self.input_size,
+            tracker=tracker or self.tracker_config,
+            verbose=False,
+        )[0]
+        return get_detections(result)
+
+    def close(self):
+        self.model = None
 
 
 class TensorRTTrackedDetector:

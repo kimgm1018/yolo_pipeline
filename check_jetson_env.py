@@ -82,6 +82,7 @@ def main():
         "models/yolo26_fp16.engine",
         "models/plate_rec_fp16.engine",
         "models/plate_dict.txt",
+        "trackers/botsort.yaml",
         "trackers/bytetrack_stable.yaml",
     ):
         p = ROOT / rel

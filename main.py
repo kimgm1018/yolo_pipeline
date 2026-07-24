@@ -20,7 +20,7 @@ from pathlib import Path
 import cv2
 
 import config
-from detector import TensorRTTrackedDetector
+from detector import UltralyticsTrackedDetector
 from event_manager import EventManager
 from plate_collector import PlateCollector
 from yolo_trt import DEFAULT_CLASS_NAMES
@@ -70,7 +70,7 @@ def parse_source(value: str):
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Jetson TensorRT 탐지 파이프라인")
+    p = argparse.ArgumentParser(description="Jetson TRT engine + Ultralytics BoT-SORT 파이프라인")
     p.add_argument("--source", default=str(config.VIDEO_SOURCE))
     p.add_argument("--yolo-engine", default=str(config.YOLO_ENGINE_PATH))
     p.add_argument("--ocr-engine", default=str(config.OCR_ENGINE_PATH))
@@ -109,7 +109,7 @@ def main():
             f"예상 위치: {config.ROOT}/models/yolo26_fp16.engine"
         )
 
-    detector = TensorRTTrackedDetector(
+    detector = UltralyticsTrackedDetector(
         engine_path=yolo_engine,
         tracker_config=config.TRACKER,
         input_size=config.IMGSZ,
@@ -138,8 +138,9 @@ def main():
         raise RuntimeError(f"카메라/영상을 열 수 없습니다: {source}")
 
     print(f"ROOT   : {config.ROOT}")
-    print(f"Backend: tensorrt  IMGSZ={config.IMGSZ}")
+    print(f"Backend: {config.BACKEND}  IMGSZ={config.IMGSZ}")
     print(f"YOLO   : {yolo_engine}")
+    print(f"Tracker: {config.TRACKER}")
     print(f"OCR    : {'off' if args.no_ocr else args.ocr_engine}")
     print(f"Source : {source}")
     print(f"Robot  : {config.ROBOT_ID}")

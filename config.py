@@ -8,7 +8,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
-BACKEND = "tensorrt"
+# ultralytics: TRT .engine + Ultralytics track (BoT-SORT)
+# tensorrt: yolo_trt + bytetrack_adapter (레거시 유지)
+BACKEND = "ultralytics"
 
 MODEL_PATH = ROOT / "models" / "best.pt"
 
@@ -24,7 +26,9 @@ VIDEO_SOURCE = 0
 
 CONF = 0.25
 IOU = 0.70
-TRACKER = str(ROOT / "trackers" / "bytetrack_stable.yaml")
+TRACKER = str(ROOT / "trackers" / "botsort.yaml")
+# 자체 ByteTrack 경로용 (TensorRTTrackedDetector)
+BYTETRACK_CONFIG = str(ROOT / "trackers" / "bytetrack_stable.yaml")
 
 ROBOT_ID = 1
 CURRENT_X = 10.0
