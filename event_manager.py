@@ -51,6 +51,8 @@ class EventManager:
                         "xCoordinate": x,
                         "yCoordinate": y,
                         "riskLevel": info["riskLevel"],
+                        "trackId": int(track_id),
+                        "className": class_name,
                     }
                 )
             else:
@@ -63,6 +65,8 @@ class EventManager:
                         "xCoordinate": x,
                         "yCoordinate": y,
                         "riskLevel": info["riskLevel"],
+                        "trackId": int(track_id),
+                        "className": class_name,
                     }
                 )
 
@@ -102,6 +106,9 @@ class EventManager:
                     "xCoordinate": x,
                     "yCoordinate": y,
                     "riskLevel": info["riskLevel"],
+                    "trackId": int(track_id),
+                    "className": "licence",
+                    "plate": plate,
                 }
             )
             self.created.add(event_key)
