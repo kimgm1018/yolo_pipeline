@@ -96,8 +96,12 @@ class UltralyticsTrackedDetector:
 
         self.model = YOLO(str(self.engine_path), task="detect")
         _apply_class_names(self.model, self.class_names)
+        self.last_timing: dict[str, float] = {}
 
     def track_frame(self, frame, conf=None, tracker=None):
+        import time
+
+        t0 = time.perf_counter()
         result = self.model.track(
             source=frame,
             persist=True,
@@ -107,6 +111,7 @@ class UltralyticsTrackedDetector:
             tracker=tracker or self.tracker_config,
             verbose=False,
         )[0]
+        self.last_timing = {"infer_ms": (time.perf_counter() - t0) * 1000.0}
         return get_detections(result)
 
     def close(self):
@@ -136,6 +141,10 @@ class TensorRTTrackedDetector:
             class_names=class_names or list(DEFAULT_CLASS_NAMES),
         )
         self.tracker = ByteTrackAdapter(tracker_config)
+
+    @property
+    def last_timing(self) -> dict:
+        return self.yolo.last_timing
 
     def track_frame(self, frame, conf=None, tracker=None):
         # conf/tracker args kept for call-site compatibility; thresholds set at init

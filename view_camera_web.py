@@ -178,7 +178,7 @@ def worker(args):
             ema = fps if ema is None else 0.9 * ema + 0.1 * fps
             frames += 1
 
-            infer_ms = float(detector.yolo.last_timing.get("infer_ms", 0.0))
+            infer_ms = float(detector.last_timing.get("infer_ms", 0.0))
             cv2.putText(
                 view,
                 f"FPS {ema:.1f} | infer {infer_ms:.1f} ms | events {event_count}",
