@@ -24,8 +24,8 @@ IMGSZ = 416
 
 VIDEO_SOURCE = 0
 
-CONF = 0.25
-IOU = 0.70
+CONF = 0.20
+IOU = 0.50
 TRACKER = str(ROOT / "trackers" / "botsort.yaml")
 # 자체 ByteTrack 경로용 (TensorRTTrackedDetector)
 BYTETRACK_CONFIG = str(ROOT / "trackers" / "bytetrack_stable.yaml")
