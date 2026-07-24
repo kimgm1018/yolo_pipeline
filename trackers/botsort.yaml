@@ -8,7 +8,7 @@ track_buffer: 90
 match_thresh: 0.85
 fuse_score: true
 
-gmc_method: none
+gmc_method: sparseOptFlow
 
 proximity_thresh: 0.5
 appearance_thresh: 0.8
